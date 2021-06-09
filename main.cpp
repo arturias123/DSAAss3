@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
 	/*if (argc < 2)
     	return 1;
   	const char *fileName = argv[1];*/
-    simulate(string("test6.txt"));
+    simulate(string("test5.txt"));
 	return 0;
 }
 

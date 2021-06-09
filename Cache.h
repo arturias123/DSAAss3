@@ -37,7 +37,7 @@ class FIFO : public ReplacementPolicy {
 	public:
 	int front;
 	FIFO() { front = 0; count = 0; arr = new Elem * [MAXSIZE]; }
-	~FIFO() { delete[]arr; }
+	~FIFO() { delete[]arr; delete removedElem; }
 	int insert(Elem* e, int idx);
 	void access(int idx) { return; }
 	int remove();
@@ -52,7 +52,7 @@ class FIFO : public ReplacementPolicy {
 class MRU : public ReplacementPolicy {
 	public:
 		MRU() { count = 0; arr = new Elem*[MAXSIZE]; }
-		~MRU() { delete[]arr; }
+		~MRU() { delete[]arr; delete removedElem; }
 	int insert(Elem* e, int idx);
 	void access(int idx);
 	int remove();
@@ -79,7 +79,7 @@ class LFU: public ReplacementPolicy {
 		};
 		newElem** heap;
 		LFU() { count = 0; arr = new Elem * [MAXSIZE]; heap = new newElem * [MAXSIZE]; }
-		~LFU() { delete[]arr; delete[]heap; }
+		~LFU() { delete[]arr; delete[]heap; delete removedElem; }
 		int insert(Elem* e, int idx);
 	void reheapDown(int heapSize);
 	void reheapUp(int heapSize);
