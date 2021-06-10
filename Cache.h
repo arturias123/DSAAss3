@@ -16,6 +16,7 @@ class ReplacementPolicy {
 	virtual int remove() = 0; 
 	virtual void print() = 0;
 	virtual void replace(int idx, Elem* e) = 0;
+	virtual ~ReplacementPolicy() {}
 	
 	int getSize() { return count; }
 	bool isFull() {return count == MAXSIZE;}
@@ -31,6 +32,7 @@ class SearchEngine {
 	virtual	void deleteNode(int key) = 0;
 	virtual void print(ReplacementPolicy* r) = 0;
 	virtual void replace(int key, int idx) = 0;
+	virtual ~SearchEngine() {}
 };
 
 class FIFO : public ReplacementPolicy {
@@ -96,7 +98,7 @@ public:
 		int key;
 		int idx;
 		Node(int key, int idx) { this->key = key; this->idx = idx; }
-		~Node() {}
+		~Node();
 	};
 	Node** hashTable;
 	int curr_size;
@@ -154,7 +156,6 @@ public:
 	Node* deleteNodeAVL(Node* root, int key);
 	void deleteTree(Node* node);
 	int searchNode(Node* node, int addr);
-	//Data* getData(Node* node, int addr);
 	void replace(int key, int idx) { replaceIdx(root, key, idx); }
 	void replaceIdx(Node* node, int addr, int idx);
 	void printI(ReplacementPolicy* q, Node* root);

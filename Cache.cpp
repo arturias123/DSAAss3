@@ -207,7 +207,6 @@ int FIFO::insert(Elem* e, int idx) {
 	}
 }
 int FIFO::remove() {
-	Elem* t = new Elem(0, 0, false);
 	if (count < 1) return -1;
 	removedElem = arr[0];
 	if (count > 1) {
@@ -245,7 +244,7 @@ Data* Cache::read(int addr) {
 			}
 		}
 		if (newIdx != idx) { // if access changes the idx, aka not FIFO
-			for (int i = 0; i < rp->getSize(); i++) {	// Update the idx for each element in search engine
+			for (int i = 0; i < rp->getSize(); i++) {	// Update the idx for each node in search engine
 				s_engine->replace(rp->getAddr(i), i);
 			}
 		}
@@ -258,7 +257,7 @@ Elem* Cache::put(int addr, Data* cont) {
 	if (rp->isFull()) {
 		int res = rp->remove(); // key of removedElem
 		s_engine->deleteNode(res); // remove Node in engine
-		int idx = rp->insert(temp, -1); // 
+		int idx = rp->insert(temp, -1); // add theo policy
 		s_engine->insert(addr, idx);
 		for (int i = 0; i < rp->getSize(); i++) {
 			s_engine->replace(rp->getAddr(i), i);
@@ -480,12 +479,6 @@ void DBHashing::insert(int key, int i) {
 }
 void DBHashing::deleteNode(int key) {
 	for (int i = 0; i < size; i++) {
-		if (hashTable[i]->key != -1) {
-			cout << hashTable[i]->key << " ";
-		}
-	}
-	cout << endl;
-	for (int i = 0; i < size; i++) {
 		if (hashTable[i]->key == key) {
 			hashTable[i]->key = -1;
 			hashTable[i]->idx = -1;
@@ -511,6 +504,7 @@ void DBHashing::replace(int key, int idx) {
 	}
 }
 void DBHashing::print(ReplacementPolicy* q) {
+	cout << "Prime memory: \n";
 	for (int i = 0; i < size; i++) {
 		if (hashTable[i]->key != -1) {
 			q->getValue(hashTable[i]->idx)->print();
