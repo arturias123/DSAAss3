@@ -208,6 +208,7 @@ int FIFO::insert(Elem* e, int idx) {
 }
 int FIFO::remove() {
 	if (count < 1) return -1;
+	if (removedElem) delete removedElem;
 	removedElem = arr[0];
 	if (count > 1) {
 		for (int i = 0; i < count - 1; i++) {
@@ -284,7 +285,6 @@ Elem* Cache::write(int addr, Data* cont) {
 			s_engine->replace(rp->getAddr(i), i);
 		}
 		found = true;
-		return NULL;
 	}
 	if (!found) {
 		if (rp->isFull()) {
@@ -325,11 +325,11 @@ int MRU::insert(Elem* e, int idx) {
 int MRU::remove() {
 	if (count < 1) return -1;
 	count--;
+	if (removedElem) delete removedElem;
 	removedElem = arr[0];
 	for (int i = 0; i <= count - 1; i++) {
 		arr[i] = arr[i + 1];
 	}
-	arr[count] = NULL;
 	return removedElem->addr;
 }
 void MRU::access(int idx) {
@@ -348,6 +348,7 @@ void MRU::print() {
 int LRU::remove() {
 	if (count < 1) return -1;
 	count--;
+	if (removedElem) delete removedElem;
 	removedElem = arr[count];
 	arr[count] = NULL;
 	return removedElem->addr;
@@ -359,7 +360,7 @@ int LFU::insert(Elem* e, int idx) {
 		heap[count] = new newElem(e);
 		heap[count]->freq++;
 		++count;	
-		reheapUp(count);
+		reheapUp(count - 1);
 		for (int i = 0; i < count; i++) {
 			arr[i] = heap[i]->elem;
 		}
@@ -374,34 +375,42 @@ int LFU::insert(Elem* e, int idx) {
 void LFU::reheapDown(int idx) {
 	int i = idx;
 	newElem* temp = heap[i];
-	while (2 * i + 2 < getSize()) {
-		if ((heap[i]->freq >= heap[2 * i + 1]->freq) && (heap[2 * i + 1]->freq > heap[2 * i + 2]->freq)) {
-			temp = heap[i];
-			heap[i] = heap[2 * i + 2];
-			heap[2 * i + 2] = temp;
-			i = 2 * i + 2;
+	while (2 * i + 1 < getSize()) {
+		if (2 * i + 2 < getSize()) {
+			if ((heap[i]->freq >= heap[2 * i + 1]->freq) && (heap[2 * i + 1]->freq > heap[2 * i + 2]->freq)) {
+				temp = heap[i];
+				heap[i] = heap[2 * i + 2];
+				heap[2 * i + 2] = temp;
+				i = 2 * i + 2;
+			}
+			else if (heap[i]->freq >= heap[2 * i + 1]->freq) {
+				temp = heap[i];
+				heap[i] = heap[2 * i + 1];
+				heap[2 * i + 1] = temp;
+				i = 2 * i + 1;
+			}
+			else if (heap[i]->freq >= heap[2 * i + 2]->freq) {
+				temp = heap[i];
+				heap[i] = heap[2 * i + 2];
+				heap[2 * i + 2] = temp;
+				i = 2 * i + 2;
+			}
+			else break;
 		}
-		else if (heap[i]->freq >= heap[2 * i + 1]->freq) {
-			temp = heap[i];
-			heap[i] = heap[2 * i + 1];
-			heap[2 * i + 1] = temp;
-			i = 2 * i + 1;
+		else if (2 * i + 1 < getSize()) {
+			if (heap[i]->freq >= heap[2 * i + 1]->freq) {
+				temp = heap[i];
+				heap[i] = heap[2 * i + 1];
+				heap[2 * i + 1] = temp;
+				i = 2 * i + 1;
+			}
+			else break;
 		}
-		else {
-			//free(temp);
-			break; 
-		}
-	}
-	if (2 * i + 1 < getSize()) {
-		if (heap[i]->freq >= heap[2 * i + 1]->freq) {
-			temp = heap[i];
-			heap[i] = heap[2 * i + 1];
-			heap[2 * i + 1] = temp;
-		}
+		else break;
 	}
 }
 void LFU::reheapUp(int heapSize) {
-	int i = heapSize - 1;
+	int i = heapSize;
 	newElem* temp = heap[0];
 	while ((i - 1) / 2 >= 0) {
 		if (heap[i]->freq < heap[(i - 1) / 2]->freq) {
@@ -411,30 +420,38 @@ void LFU::reheapUp(int heapSize) {
 			i = (i - 1) / 2;
 		}
 		else {
-			//free(temp);
 			break;
 		}
 	}
 }
 void LFU::access(int idx) {
 	heap[idx]->freq++;
+	reheapUp(idx);
 	reheapDown(idx);
 	for (int i = 0; i < count; i++) {
 		arr[i] = heap[i]->elem;
 	}
 }
 int LFU::remove() {
+	delete r;
 	if (count < 1) return -1;
 	count--;
-	newElem* temp = heap[0];	// swap root and furthest child
+
+	// swap root and furthest child
+	Elem* temp = arr[0];	
+	r = heap[0];
 	heap[0] = heap[count];	
-	heap[count] = temp;
-	removedElem = temp->elem;	// remove the swapped element (previously root)
+
+	// remove the swapped element (previously root)
+	heap[count] = NULL;
+	if (removedElem) delete removedElem;
+	removedElem = temp;	
 	reheapDown(0); // count = new size after removed
+
+	// Copy the elem array according to heap
 	for (int i = 0; i < count; i++) {
 		arr[i] = heap[i]->elem;
 	}
-	free(temp);
 	return removedElem->addr;
 }
 void LFU::print() {
@@ -446,6 +463,7 @@ void LFU::replace(int idx, Elem* e) {
 	access(idx);
 	for (int i = 0; i < count; i++) {
 		if (arr[i]->addr == e->addr) {
+			delete arr[i];
 			arr[i] = e;
 			heap[i]->elem = e;
 		}
@@ -455,10 +473,10 @@ void LFU::replace(int idx, Elem* e) {
 void DBHashing::insert(int key, int i) {
 	if (isFull()) return;
 
-	int index = hash1(key) % size;
+	int index = hash1(key);
 
-	if (hashTable[index]->key != -1) {
-		int index2 = hash2(key) % size;
+	if (hashTable[index % size]->key != -1) {
+		int index2 = hash2(key);
 		int j = 1;
 		while (true) {
 			int newIndex = (index + j * index2) % size;
@@ -472,8 +490,8 @@ void DBHashing::insert(int key, int i) {
 		}
 	}
 	else {
-		hashTable[index]->key = key;
-		hashTable[index]->idx = i;
+		hashTable[index % size]->key = key;
+		hashTable[index % size]->idx = i;
 	}
 	curr_size++;
 }

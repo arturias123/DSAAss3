@@ -10,7 +10,7 @@ class ReplacementPolicy {
 	Elem** arr;
 	
 	public:
-	Elem* removedElem = new Elem(0, 0, false);
+		Elem* removedElem = NULL;
 	virtual int insert(Elem* e,int idx) = 0;//insert e into arr[idx] if idx != -1 else into the position by replacement policy
 	virtual void access(int idx) = 0;//idx is index in the cache of the accessed element 
 	virtual int remove() = 0; 
@@ -39,7 +39,11 @@ class FIFO : public ReplacementPolicy {
 	public:
 	int front;
 	FIFO() { front = 0; count = 0; arr = new Elem * [MAXSIZE]; }
-	~FIFO() { delete[]arr; delete removedElem; }
+	~FIFO() {
+		for (int i = 0; i < MAXSIZE; i++) {
+			delete arr[i];
+		}
+		delete[]arr; delete removedElem; count = 0; }
 	int insert(Elem* e, int idx);
 	void access(int idx) { return; }
 	int remove();
@@ -47,6 +51,7 @@ class FIFO : public ReplacementPolicy {
 	void replace(int idx, Elem* e) {
 		/*delete arr[idx];
 		access(idx);*/
+		delete arr[idx];
 		arr[idx] = e;
 	}
 };
@@ -54,7 +59,12 @@ class FIFO : public ReplacementPolicy {
 class MRU : public ReplacementPolicy {
 	public:
 		MRU() { count = 0; arr = new Elem*[MAXSIZE]; }
-		~MRU() { delete[]arr; delete removedElem; }
+		~MRU() {
+			for (int i = 0; i < MAXSIZE; i++) {
+				delete arr[i];
+			}
+			delete[]arr; delete removedElem; count = 0;
+		}
 	int insert(Elem* e, int idx);
 	void access(int idx);
 	int remove();
@@ -62,6 +72,7 @@ class MRU : public ReplacementPolicy {
 	void replace(int idx, Elem* e) {
 		//delete arr[idx];
 		access(idx);
+		delete arr[0];
 		arr[0] = e;
 	}
 };
@@ -77,12 +88,23 @@ class LFU: public ReplacementPolicy {
 			Elem* elem;
 			int freq;
 			newElem(Elem* e) :elem(e), freq(0) {}
-			~newElem() { delete elem; }
+			~newElem() {}
 		};
 		newElem** heap;
+		newElem* r;
 		LFU() { count = 0; arr = new Elem * [MAXSIZE]; heap = new newElem * [MAXSIZE]; }
-		~LFU() { delete[]arr; delete[]heap; delete removedElem; }
-		int insert(Elem* e, int idx);
+		~LFU() { 
+			for (int i = 0; i < count; i++) {
+				delete arr[i];
+				delete heap[i];
+			}
+			delete[]arr;
+			delete[]heap;
+			delete removedElem;
+			delete r;
+			count = 0; 
+		}
+	int insert(Elem* e, int idx);
 	void reheapDown(int heapSize);
 	void reheapUp(int heapSize);
 	void access(int idx);
@@ -98,7 +120,7 @@ public:
 		int key;
 		int idx;
 		Node(int key, int idx) { this->key = key; this->idx = idx; }
-		~Node();
+		~Node() {}
 	};
 	Node** hashTable;
 	int curr_size;
@@ -114,7 +136,12 @@ public:
 			hashTable[i] = new Node(-1, -1);
 		}
 	}
-	~DBHashing() { delete[]hashTable; }
+	~DBHashing() { 
+		for (int i = 0; i < size; i++) {
+			delete hashTable[i];
+		}
+		delete[]hashTable; 
+	}
 	bool isFull() { return (curr_size == size); }
 	void insert(int key, int i);
 	void deleteNode(int key);
